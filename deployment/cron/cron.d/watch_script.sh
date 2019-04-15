@@ -3,16 +3,10 @@
 ### Define scripts variables
 #
 
-TMP=/var/log/crontabTmp
-REF=/var/log/crontabRef
+TMP=/home/$USER/tmp
+REF=/home/$USER/ref
 
 shasum /etc/crontab > $TMP
-
-### Define mail content
-#
-
-BODY="Hi root, the crontab has been modified. Please verify the action origin."
-SUBJECT="WARNING ! Crontab modification."
 
 ### Execute script
 #
@@ -24,9 +18,10 @@ if [ -f $REF ]; then
 	if [ "$(diff $TMP $REF)" != "" ]; then
 
 		## Send a notification mail to user root
-		echo "$BODY" | mail -s "$SUBJECT" root
+		sudo sendmail root@$HOSTNAME < /home/$USER/cron/email.txt
+		rm -f /home/$USER/tmp
+		cp /home/$USER/ref /home/$USER/tmp
 	fi
+else
+	shasum /etc/crontab > $REF
 fi
-
-## Clean the tmp and assign it to ref
-mv $TMP $REF

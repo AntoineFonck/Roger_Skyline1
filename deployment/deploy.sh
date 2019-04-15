@@ -8,8 +8,8 @@
 ## Error check 
 #
 
-if [ $# != 2 ]; then
-	echo -e "$RED[ERROR]$END$CYA ./deploy.sh <USERNAME> <IP>$END" && exit
+if [ $# != 3 ]; then
+	echo -e "$RED[ERROR]$END$CYA ./deploy.sh <USERNAME> <IP> <GATEWAY>$END" && exit
 fi
 
 ## Variables definition
@@ -17,6 +17,7 @@ fi
 
 USER=$1
 IP=$2
+GATEWAY=$3
 
 main() {
 
@@ -27,9 +28,9 @@ echo -e "$CYA LAUNCHING MAIN DEPLOY.SH ...$END\n"
 
 echo -e "\n$CYA INSTALLING PACKAGES ...$END\n"
 
-apt install -y vim sudo net-tools iptables-persistent fail2ban sendmail apache2 php-dev php libapache2-mod-php portsentry
+apt install -y vim sudo net-tools iptables-persistent fail2ban sendmail apache2 php-dev php libapache2-mod-php
 ch_err
-ok_msg "vim, sudo, net-tools, iptables-persistent, fail2ban, sendmail, apache2, php-dev, php, libapache2-mod-php, portsentry"
+ok_msg "vim, sudo, net-tools, iptables-persistent, fail2ban, sendmail, apache2, php-dev, php, libapache2-mod-php"
 
 ## Step2 : add user to sudo group
 #
@@ -38,9 +39,7 @@ echo -e "\n$CYA USER INITIALIZATION ...$END\n"
 
 adduser $USER sudo
 ch_err
-adduser $USER root
-ch_err
-ok_msg "$USER added to root group and sudo"
+ok_msg "$USER added to sudo group"
 
 ## Step3 : configure static dhcp with /30 mask
 #
@@ -49,13 +48,13 @@ echo -e "\n$CYA CONFIGURING DHCP ...$END\n"
 
 sed -i.bak 's/allow-hotplug/auto/' /etc/network/interfaces
 ch_err
-sed -i.bak2 "s/dhcp/static\n\taddress $IP\n\tnetmask 255.255.255.252\n\tgateway 10.13.254.254/" /etc/network/interfaces
+sed -i.bak2 "s/dhcp/static\n\taddress $IP\n\tnetmask 255.255.255.252\n\tgateway $GATEWAY/" /etc/network/interfaces
 ch_err
 /etc/init.d/networking restart
 ch_err
 ok_msg "static dhcp configured for networking service"
 
-## Step4 : configure ssh on port 40 and prohibit root access
+## Step4 : configure ssh on port 4242 and prohibit root access
 #
 
 echo -e "\n$CYA CONFIGURING SSH SERVICE ...$END\n"
@@ -76,38 +75,38 @@ echo -e "\n$CYA CONFIGURING CRON ...$END\n"
 # Cron variables
 CRONTAB=/etc/crontab
 CRON_PATH=/etc/cron.d
-CRON_UPDA=update_pckg
-CRON_CH=ch_crontab
+UPDATE_SCRIPT=update_script.sh
+WATCH_SCRIPT=watch_script.sh
 CRON_FOLDER=./cron
 CRON_D=cron.d
 
-cp $CRON_FOLDER/$CRON_D/$CRON_CH $CRON_PATH
+cp $CRON_FOLDER/$CRON_D/$WATCH_SCRIPT $CRON_PATH
 ch_err
-cp $CRON_FOLDER/$CRON_D/$CRON_UPDA $CRON_PATH
+cp $CRON_FOLDER/$CRON_D/$UPDATE_SCRIPT $CRON_PATH
 ch_err
 
-if grep -E "$CRON_PATH/$CRON_UPDA" $CRONTAB | grep -v "@reboot"; then
-	ok_msg "cron update pckg already present"
+if grep -E "$CRON_PATH/$UPDATE_SCRIPT" $CRONTAB | grep -v "@reboot"; then
+	ok_msg "cron update script already present"
 else
-	echo "* 4	* * *	root	$CRON_PATH/$CRON_UPDA" >> $CRONTAB
+	echo "0 4	* * 1	root	$CRON_PATH/$UPDATE_SCRIPT >> /var/log/update_script.log" >> $CRONTAB
 	ch_err
-	ok_msg "cron update pckg added"
+	ok_msg "cron update script added"
 fi
 
-if grep -E "$CRON_PATH/$CRON_CH" $CRONTAB; then
-	ok_msg "cron check modifs already present in crontab file"
+if grep -E "$CRON_PATH/$WATCH_SCRIPT" $CRONTAB; then
+	ok_msg "cron watch script already present in crontab file"
 else
-	echo "* 0	* * *	root	$CRON_PATH/$CRON_CH" >> $CRONTAB
+	echo "0 0	* * *	root	$CRON_PATH/$WATCH_SCRIPT" >> $CRONTAB
 	ch_err
-	ok_msg "cron check modifs in crontab script added to crontab"
+	ok_msg "cron watch script added to crontab"
 fi
 
-if grep -E "@reboot.*$CRON_PATH/$CRON_UPDA" $CRONTAB; then
-	ok_msg "cron update pckg at reboot already present in crontab" 
+if grep -E "@reboot.*$CRON_PATH/$UPDATE_SCRIPT" $CRONTAB; then
+	ok_msg "cron update script at reboot already present in crontab" 
 else
-	echo "@reboot root $CRON_PATH/$CRON_UPDA" >> $CRONTAB
+	echo "@reboot root $CRON_PATH/$UPDATE_SCRIPT >> /var/log/update_script.log" >> $CRONTAB
 	ch_err
-	ok_msg "cron update pckg at reboot added"
+	ok_msg "cron update script at reboot added"
 fi
 
 ## Step7 : Web Server with ssl certificate
