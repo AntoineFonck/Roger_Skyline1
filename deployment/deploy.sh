@@ -207,39 +207,28 @@ ok_msg "apache2 service restart"
 echo -e "\n$CYA ACTIVATE FIREWALL ...$END\n"
 
 FW_DIR=firewall
-FW_FILE=fw_dos_portscan_2
+FW_FILE=iptables
+F2B_FILE=jail.local
 
 ./$FW_DIR/$FW_FILE
 ch_err
-ok_msg "firewall set"
-
-
-## Step10 : Activate portsentry against portscan
-#
-
-echo -e "\n$CYA ACTIVATE PORTSENTRY ...$END\n"
-
-PORTSENTRY_CONF_1=/etc/portsentry/portsentry.conf
-PORTSENTRY_CONF_2=/etc/default/portsentry
-
-sed -i 's#BLOCK_UDP="0"#BLOCK_UDP="1"#' $PORTSENTRY_CONF_1
-sed -i 's#BLOCK_TCP="0"#BLOCK_TCP="1"#' $PORTSENTRY_CONF_1
-ok_msg "$PORTSENTRY_CONF_1 configured"
-
-sed -i 's#TCP_MODE="tcp"#TCP_MODE="atcp"#' $PORTSENTRY_CONF_2
-sed -i 's#UDP_MODE="udp"#UDP_MODE="audp"#' $PORTSENTRY_CONF_2
-ok_msg "$PORTSENTRY_CONF_2 configured"
-
-/etc/init.d/portsentry restart
+ok_msg "iptables set"
+touch /var/log/apache2/server.log
 ch_err
-ok_msg "Portsentry service restarted"
+cat /$FW_DIR/$F2B_FILE > /etc/fail2ban/$F2B_FILE
+ch_err
+cat /$FW_DIR/http-get-dos.conf > /etc/fail2ban/filter.d/http-get-dos.conf
+ch_err
+systemctl restart fail2ban.service
+ch_err
+ok_msg "fail2ban set"
 
+echo -e "\n$CYA your iptables rules are ...\n$END"
+iptables -L
 ## Step final : remove ip provided by 42 dhcp server / it breaks the connection
 #
 
-echo -e "$RED[REMOVE MANUALLY OLD IP WITH 'ip addr del <IP> dev <INTERFACE>']$END"
+echo -e "$RED[REMOVE MANUALLY OLD IP WITH 'ip addr del <IP> dev <INTERFACE>' and modify it with an ip of your choice, in the right range depending on the netmask]$END"
 }
 
 main
-
-

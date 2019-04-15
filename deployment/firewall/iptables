@@ -1,11 +1,5 @@
 #!/bin/bash
 
-## IPV4
-#
-
-echo "IPv4"
-
-
 ## Reset tables configurations
 #
 
@@ -18,7 +12,7 @@ iptables -F -t nat
 iptables -F -t mangle
 iptables -F -t raw
 # Erase all non-default chains
-echo "	-- Erase all non-default chains"
+echo "	-- Erase all user defined chains"
 iptables -X
 iptables -X -t nat
 iptables -X -t mangle
@@ -36,7 +30,7 @@ iptables -P INPUT DROP
 iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 
-# Allow established and related connection & tcp on port 40
+# Allow established and related connection & tcp on port 4242
 echo "	-- Keep established connection"
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
@@ -53,9 +47,8 @@ iptables -A OUTPUT -m state --state INVALID -j DROP
 # Synflood protection
 echo "DDOS Synflood protection"
 iptables -N RATE-LIMIT
-iptables -A RATE-LIMIT -p tcp --syn -m limit --limit 1/s --limit-burst 4 -j ACCEPT
 iptables -A RATE-LIMIT -p tcp --syn -j DROP
-#/sbin/iptables -A INPUT -p tcp --syn -m limit --limit 2/s --limit-burst 30 -j ACCEPT
+iptables -A RATE-LIMIT -p tcp --syn -m limit --limit 1/s --limit-burst 4 -j ACCEPT
 
 
 ## Trafic configuration
@@ -64,8 +57,8 @@ iptables -A RATE-LIMIT -p tcp --syn -j DROP
 echo "Trafic configuration"
 
 # closes all ports except ssh, 80, 443
-echo "	-- Opens  ports ssh (40), https (443)"
-iptables -A INPUT -p tcp -m tcp -m multiport --dports 40,443 -j RATE-LIMIT
+echo "	-- Opens  ports ssh (4242), https (443)"
+iptables -A INPUT -p tcp -m tcp -m multiport --dports 4242,443 -j RATE-LIMIT
 iptables -A INPUT -p tcp -m tcp --dport 80 -j DROP
 iptables -A INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 4 -j ACCEPT
 
@@ -77,50 +70,8 @@ iptables -A INPUT -p tcp --syn -m limit --limit 1/s --limit-burst 4 -j ACCEPT
 echo "DDOS Pingflood protection"
 /sbin/iptables -A INPUT -p icmp --icmp-type echo-request -m limit --limit 1/s -j ACCEPT
 
-# Port scanning protection
-echo "Portscanning protection : portsentry is installed and service started"
-
-
 ##  Make rule permanent
 #
 
 echo "Save iptables rules"
 iptables-save > /etc/iptables/rules.v4
-
-
-## IPv6
-#
-
-echo "IPv6"
-
-## Reset tables configurations
-#
-
-echo "Reset tables configurations"
-
-# Flush all rules
-echo "	-- Flush iptable rules"
-ip6tables -F
-ip6tables -F -t nat
-ip6tables -F -t mangle
-ip6tables -F -t raw
-# Erase all non-default chains
-echo "	-- Erase all non-default chains"
-ip6tables -X
-ip6tables -X -t nat
-ip6tables -X -t mangle
-ip6tables -X -t raw
-
-
-# Change policy to DROP for INPUT and FORWARD
-echo "Set all policies to drop"
-ip6tables -P INPUT DROP
-ip6tables -P FORWARD DROP
-ip6tables -P OUTPUT DROP
-
-
-##  Make rule permanent
-#
-
-echo "Save iptables rules"
-ip6tables-save > /etc/iptables/rules.v6
