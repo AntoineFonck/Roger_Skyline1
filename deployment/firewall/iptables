@@ -47,8 +47,8 @@ iptables -A OUTPUT -m state --state INVALID -j DROP
 # Synflood protection
 echo "DDOS Synflood protection"
 iptables -N RATE-LIMIT
-iptables -A RATE-LIMIT -p tcp --syn -j DROP
 iptables -A RATE-LIMIT -p tcp --syn -m limit --limit 1/s --limit-burst 4 -j ACCEPT
+iptables -A RATE-LIMIT -p tcp --syn -j DROP
 echo "Port scan protection"
 iptables -A FORWARD -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT
 
