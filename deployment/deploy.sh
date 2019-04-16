@@ -215,9 +215,9 @@ ch_err
 ok_msg "iptables set"
 touch /var/log/apache2/server.log
 ch_err
-cat /$FW_DIR/$F2B_FILE > /etc/fail2ban/$F2B_FILE
+cat $FW_DIR/$F2B_FILE > /etc/fail2ban/$F2B_FILE
 ch_err
-cat /$FW_DIR/http-get-dos.conf > /etc/fail2ban/filter.d/http-get-dos.conf
+cat $FW_DIR/http-get-dos.conf > /etc/fail2ban/filter.d/http-get-dos.conf
 ch_err
 systemctl restart fail2ban.service
 ch_err
