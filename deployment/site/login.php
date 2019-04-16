@@ -1,22 +1,19 @@
 <?php
-$login_valide = "rogeruser";
-$pwd_valide = "roger";
-
+$login_valid = "roger";
+$pwd_valid = "roger";
 if (isset($_POST['login']) && isset($_POST['pwd'])) {
-
-	if ($login_valide == $_POST['login'] && $pwd_valide == $_POST['pwd']) {
+	if ($login_valid == $_POST['login'] && $pwd_valid == $_POST['pwd']) {
 		session_start ();
 		$_SESSION['login'] = $_POST['login'];
 		$_SESSION['pwd'] = $_POST['pwd'];
-
-		header ('location: page_membre.php');
+		header ('location: member_page.php');
 	}
 	else {
-		echo '<body onLoad="alert(\'Membre non reconnu...\')">';
+		echo '<body onLoad="alert(\'Member unknown...\')">';
 		echo '<meta http-equiv="refresh" content="0;URL=index.html">';
 	}
 }
 else {
-	echo 'Les variables du formulaire ne sont pas déclarées.';
+	echo 'Please refresh';
 }
 ?>

@@ -229,6 +229,7 @@ iptables -L
 #
 
 echo -e "$RED[REMOVE MANUALLY OLD IP WITH 'ip addr del <IP> dev <INTERFACE>' and modify it with an ip of your choice, in the right range depending on the netmask]$END"
+echo -e "\n$CYA REBOOT IS ADVISED FOR ALL THE CHANGES TO TAKE PLACE CORRECTLY$END"
 }
 
 main
